@@ -1,7 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Stethoscope } from "lucide-react";
+import { Menu, X, Stethoscope, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { label: "Home", path: "/" },
@@ -12,6 +20,20 @@ const navItems = [
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile, roles, signOut } = useAuth();
+
+  const getDashboardPath = () => {
+    if (roles.includes("admin")) return "/admin/dashboard";
+    if (roles.includes("doctor")) return "/doctor/dashboard";
+    if (roles.includes("center")) return "/center/dashboard";
+    return "/patient/dashboard";
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
@@ -41,21 +63,39 @@ const Header = () => {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link to="/login">
-            <Button variant="ghost" size="sm">
-              Log In
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button size="sm">Sign Up</Button>
-          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  {profile?.full_name || "Account"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(getDashboardPath())}>
+                  Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">Log In</Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm">Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
+        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
@@ -79,16 +119,25 @@ const Header = () => {
               </Link>
             ))}
             <div className="mt-3 flex gap-2">
-              <Link to="/login" className="flex-1">
-                <Button variant="outline" className="w-full" size="sm">
-                  Log In
-                </Button>
-              </Link>
-              <Link to="/register" className="flex-1">
-                <Button className="w-full" size="sm">
-                  Sign Up
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <Link to={getDashboardPath()} className="flex-1" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" className="w-full" size="sm">Dashboard</Button>
+                  </Link>
+                  <Button variant="outline" className="flex-1" size="sm" onClick={handleSignOut}>
+                    Log Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="flex-1">
+                    <Button variant="outline" className="w-full" size="sm">Log In</Button>
+                  </Link>
+                  <Link to="/register" className="flex-1">
+                    <Button className="w-full" size="sm">Sign Up</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
