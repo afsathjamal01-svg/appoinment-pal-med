@@ -1,12 +1,20 @@
-import { useEffect, useState } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Building2, CalendarDays, IndianRupee, Percent, CheckCircle, XCircle, Stethoscope } from "lucide-react";
+import { Users, Building2, CalendarDays, IndianRupee, Percent, CheckCircle, XCircle, Stethoscope, LayoutDashboard, Settings, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+
+const adminNav = [
+  { label: "Overview", path: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Doctors", path: "/admin/doctors", icon: Stethoscope },
+  { label: "Centers", path: "/admin/centers", icon: Building2 },
+  { label: "Users", path: "/admin/users", icon: Users },
+  { label: "Approvals", path: "/admin/approvals", icon: UserCheck },
+  { label: "Settings", path: "/admin/settings", icon: Settings },
+];
 
 interface PendingDoctor {
   id: string;
@@ -24,13 +32,7 @@ interface PendingCenter {
 }
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
-    patients: 0,
-    doctors: 0,
-    centers: 0,
-    bookings: 0,
-    revenue: 0,
-  });
+  const [stats, setStats] = useState({ patients: 0, doctors: 0, centers: 0, bookings: 0, revenue: 0 });
   const [pendingDoctors, setPendingDoctors] = useState<PendingDoctor[]>([]);
   const [pendingCenters, setPendingCenters] = useState<PendingCenter[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,6 @@ const AdminDashboard = () => {
       ]);
 
     const revenue = paymentsRes.data?.reduce((sum, p) => sum + Number(p.total_amount), 0) ?? 0;
-
     setStats({
       patients: patientsRes.count ?? 0,
       doctors: doctorsRes.count ?? 0,
@@ -58,7 +59,6 @@ const AdminDashboard = () => {
       revenue,
     });
 
-    // Fetch profiles for pending doctors
     const docs = pendingDocRes.data ?? [];
     if (docs.length > 0) {
       const profileIds = docs.map((d) => d.user_id);
@@ -68,14 +68,11 @@ const AdminDashboard = () => {
     } else {
       setPendingDoctors([]);
     }
-
     setPendingCenters(pendingCenRes.data ?? []);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const approveDoctor = async (id: string) => {
     const { error } = await supabase.from("doctors").update({ is_approved: true }).eq("id", id);
@@ -83,21 +80,18 @@ const AdminDashboard = () => {
     toast.success("Doctor approved");
     fetchData();
   };
-
   const rejectDoctor = async (id: string) => {
     const { error } = await supabase.from("doctors").delete().eq("id", id);
     if (error) return toast.error("Failed to reject doctor");
     toast.success("Doctor rejected");
     fetchData();
   };
-
   const approveCenter = async (id: string) => {
     const { error } = await supabase.from("centers").update({ is_approved: true }).eq("id", id);
     if (error) return toast.error("Failed to approve center");
     toast.success("Center approved");
     fetchData();
   };
-
   const rejectCenter = async (id: string) => {
     const { error } = await supabase.from("centers").delete().eq("id", id);
     if (error) return toast.error("Failed to reject center");
@@ -117,102 +111,91 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <div className="container py-8">
-        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">Platform overview and management</p>
-
-        {/* Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
-          {statCards.map((s) => (
-            <Card key={s.label}>
-              <CardContent className="p-4">
-                <s.icon className="h-5 w-5 text-primary" />
-                <p className="mt-2 text-xl font-bold text-foreground">{loading ? "…" : s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Commission Settings */}
-        <h2 className="mt-8 text-lg font-semibold text-foreground">
-          <Percent className="mr-2 inline h-5 w-5" />
-          Commission Settings
-        </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {[
-            { label: "Standard Commission", value: "15%", desc: "Applied to all bookings" },
-            { label: "Premium Doctor Rate", value: "10%", desc: "For subscribed doctors" },
-            { label: "Patient Booking Fee", value: "₹20", desc: "Per appointment" },
-          ].map((c) => (
-            <Card key={c.label}>
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold text-primary">{c.value}</p>
-                <p className="font-medium text-foreground">{c.label}</p>
-                <p className="text-xs text-muted-foreground">{c.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Pending Approvals */}
-        <h2 className="mt-8 text-lg font-semibold text-foreground">Pending Approvals</h2>
-        <div className="mt-4 space-y-3">
-          {!loading && pendingDoctors.length === 0 && pendingCenters.length === 0 && (
-            <p className="text-sm text-muted-foreground">No pending approvals</p>
-          )}
-
-          {pendingDoctors.map((doc) => (
-            <Card key={doc.id}>
-              <CardContent className="flex items-center justify-between p-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-foreground">{doc.profile?.full_name || "Unknown"}</p>
-                    <Badge variant="secondary">Doctor</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {doc.specialization} · {doc.qualification}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" className="gap-1" onClick={() => approveDoctor(doc.id)}>
-                    <CheckCircle className="h-3.5 w-3.5" /> Approve
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => rejectDoctor(doc.id)}>
-                    <XCircle className="h-3.5 w-3.5" /> Reject
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {pendingCenters.map((center) => (
-            <Card key={center.id}>
-              <CardContent className="flex items-center justify-between p-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-foreground">{center.name}</p>
-                    <Badge variant="secondary">Center</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{center.address}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" className="gap-1" onClick={() => approveCenter(center.id)}>
-                    <CheckCircle className="h-3.5 w-3.5" /> Approve
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => rejectCenter(center.id)}>
-                    <XCircle className="h-3.5 w-3.5" /> Reject
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+    <DashboardLayout title="Admin Dashboard" subtitle="Platform overview and management" navItems={adminNav} accentColor="bg-destructive">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {statCards.map((s) => (
+          <Card key={s.label}>
+            <CardContent className="p-4">
+              <s.icon className="h-5 w-5 text-primary" />
+              <p className="mt-2 text-xl font-bold text-foreground">{loading ? "…" : s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-      <Footer />
-    </div>
+
+      {/* Commission Settings */}
+      <h2 className="mt-8 text-lg font-semibold text-foreground">
+        <Percent className="mr-2 inline h-5 w-5" />
+        Commission Settings
+      </h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {[
+          { label: "Standard Commission", value: "15%", desc: "Applied to all bookings" },
+          { label: "Premium Doctor Rate", value: "10%", desc: "For subscribed doctors" },
+          { label: "Patient Booking Fee", value: "₹20", desc: "Per appointment" },
+        ].map((c) => (
+          <Card key={c.label}>
+            <CardContent className="p-4">
+              <p className="text-2xl font-bold text-primary">{c.value}</p>
+              <p className="font-medium text-foreground">{c.label}</p>
+              <p className="text-xs text-muted-foreground">{c.desc}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Pending Approvals */}
+      <h2 className="mt-8 text-lg font-semibold text-foreground">Pending Approvals</h2>
+      <div className="mt-4 space-y-3">
+        {!loading && pendingDoctors.length === 0 && pendingCenters.length === 0 && (
+          <p className="text-sm text-muted-foreground">No pending approvals</p>
+        )}
+        {pendingDoctors.map((doc) => (
+          <Card key={doc.id}>
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-foreground">{doc.profile?.full_name || "Unknown"}</p>
+                  <Badge variant="secondary">Doctor</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{doc.specialization} · {doc.qualification}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="gap-1" onClick={() => approveDoctor(doc.id)}>
+                  <CheckCircle className="h-3.5 w-3.5" /> Approve
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => rejectDoctor(doc.id)}>
+                  <XCircle className="h-3.5 w-3.5" /> Reject
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {pendingCenters.map((center) => (
+          <Card key={center.id}>
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-foreground">{center.name}</p>
+                  <Badge variant="secondary">Center</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{center.address}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="gap-1" onClick={() => approveCenter(center.id)}>
+                  <CheckCircle className="h-3.5 w-3.5" /> Approve
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => rejectCenter(center.id)}>
+                  <XCircle className="h-3.5 w-3.5" /> Reject
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </DashboardLayout>
   );
 };
 
