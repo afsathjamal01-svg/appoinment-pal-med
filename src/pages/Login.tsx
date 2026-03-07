@@ -3,9 +3,16 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Stethoscope, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Stethoscope, Loader2, User, HeartPulse, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const roles = [
+  { value: "patient", label: "Patient", icon: User, placeholder: "patient@example.com" },
+  { value: "doctor", label: "Doctor", icon: HeartPulse, placeholder: "doctor@example.com" },
+  { value: "center", label: "Center", icon: Building2, placeholder: "center@example.com" },
+] as const;
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,11 +38,11 @@ const Login = () => {
       .select("role")
       .eq("user_id", data.user.id);
 
-    const roles = rolesData?.map((r) => r.role) ?? [];
+    const userRoles = rolesData?.map((r) => r.role) ?? [];
 
-    if (roles.includes("admin")) navigate("/admin/dashboard");
-    else if (roles.includes("doctor")) navigate("/doctor/dashboard");
-    else if (roles.includes("center")) navigate("/center/dashboard");
+    if (userRoles.includes("admin")) navigate("/admin/dashboard");
+    else if (userRoles.includes("doctor")) navigate("/doctor/dashboard");
+    else if (userRoles.includes("center")) navigate("/center/dashboard");
     else navigate("/patient/dashboard");
 
     setLoading(false);
@@ -51,7 +58,7 @@ const Login = () => {
           </div>
           <h2 className="mt-6 text-3xl font-bold text-primary-foreground">MediBook</h2>
           <p className="mt-3 text-primary-foreground/80">
-            Your trusted platform for booking doctor appointments instantly. Access your dashboard as a patient, doctor, or admin — all from one login.
+            Your trusted platform for booking doctor appointments instantly. Access your dashboard as a patient, doctor, or center — all from one login.
           </p>
         </div>
       </div>
@@ -73,36 +80,51 @@ const Login = () => {
             Sign in to access your dashboard
           </p>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11"
-              />
-            </div>
-            <Button className="h-11 w-full" type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
-          </form>
+          <Tabs defaultValue="patient" className="mt-6 w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              {roles.map((role) => (
+                <TabsTrigger key={role.value} value={role.value} className="gap-1.5">
+                  <role.icon className="h-4 w-4" />
+                  {role.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {roles.map((role) => (
+              <TabsContent key={role.value} value={role.value}>
+                <form onSubmit={handleLogin} className="mt-4 space-y-5 rounded-xl border bg-card p-6 shadow-sm">
+                  <div className="space-y-2">
+                    <Label htmlFor={`email-${role.value}`}>Email</Label>
+                    <Input
+                      id={`email-${role.value}`}
+                      type="email"
+                      placeholder={role.placeholder}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`password-${role.value}`}>Password</Label>
+                    <Input
+                      id={`password-${role.value}`}
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  <Button className="h-11 w-full" type="submit" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Sign In as {role.label}
+                  </Button>
+                </form>
+              </TabsContent>
+            ))}
+          </Tabs>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
