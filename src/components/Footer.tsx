@@ -41,7 +41,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
-        © 2026 MediBook. All rights reserved.
+        <Link to="/admin/login" className="hover:text-foreground">© 2026 MediBook</Link>. All rights reserved.
       </div>
     </div>
   </footer>
