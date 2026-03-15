@@ -4,27 +4,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Stethoscope, Loader2, User, HeartPulse, Building2 } from "lucide-react";
+import { Stethoscope, Loader2, User, HeartPulse, Building2, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const roles = [
-  { value: "patient", label: "Patient", icon: User, placeholder: "patient@example.com" },
-  { value: "doctor", label: "Doctor", icon: HeartPulse, placeholder: "doctor@example.com" },
-  { value: "center", label: "Center", icon: Building2, placeholder: "center@example.com" },
+  { value: "patient", label: "Patient", icon: User },
+  { value: "doctor", label: "Doctor", icon: HeartPulse },
+  { value: "center", label: "Center", icon: Building2 },
 ] as const;
+
+/** Convert a phone number to a deterministic email for Supabase auth */
+const phoneToEmail = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  return `phone_${digits}@medibook.local`;
+};
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phone.trim()) {
+      toast({ title: "Phone required", description: "Please enter your phone number", variant: "destructive" });
+      return;
+    }
     setLoading(true);
 
+    const email = phoneToEmail(phone);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -77,7 +88,7 @@ const Login = () => {
 
           <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sign in to access your dashboard
+            Sign in with your phone number
           </p>
 
           <Tabs defaultValue="patient" className="mt-6 w-full">
@@ -94,16 +105,19 @@ const Login = () => {
               <TabsContent key={role.value} value={role.value}>
                 <form onSubmit={handleLogin} className="mt-4 space-y-5 rounded-xl border bg-card p-6 shadow-sm">
                   <div className="space-y-2">
-                    <Label htmlFor={`email-${role.value}`}>Email</Label>
-                    <Input
-                      id={`email-${role.value}`}
-                      type="email"
-                      placeholder={role.placeholder}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="h-11"
-                    />
+                    <Label htmlFor={`phone-${role.value}`}>Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id={`phone-${role.value}`}
+                        type="tel"
+                        placeholder="+91 9876543210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        className="h-11 pl-10"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor={`password-${role.value}`}>Password</Label>

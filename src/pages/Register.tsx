@@ -1,15 +1,20 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
-import { Stethoscope, Loader2 } from "lucide-react";
+import { Stethoscope, Loader2, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+/** Convert a phone number to a deterministic email for Supabase auth */
+const phoneToEmail = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  return `phone_${digits}@medibook.local`;
+};
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,31 +23,36 @@ const Register = () => {
 
   // Patient fields
   const [patientName, setPatientName] = useState("");
-  const [patientEmail, setPatientEmail] = useState("");
   const [patientPhone, setPatientPhone] = useState("");
   const [patientPassword, setPatientPassword] = useState("");
 
   // Doctor fields
   const [doctorName, setDoctorName] = useState("");
-  const [doctorEmail, setDoctorEmail] = useState("");
+  const [doctorPhone, setDoctorPhone] = useState("");
   const [doctorSpecialty, setDoctorSpecialty] = useState("");
   const [doctorExperience, setDoctorExperience] = useState("");
   const [doctorPassword, setDoctorPassword] = useState("");
 
   // Center fields
   const [centerName, setCenterName] = useState("");
-  const [centerEmail, setCenterEmail] = useState("");
+  const [centerPhone, setCenterPhone] = useState("");
   const [centerAddress, setCenterAddress] = useState("");
   const [centerPassword, setCenterPassword] = useState("");
 
   const signUp = async (
-    email: string,
+    phone: string,
     password: string,
     fullName: string,
     role: "patient" | "doctor" | "center",
     extraData?: Record<string, unknown>
   ) => {
+    if (!phone.trim()) {
+      toast({ title: "Phone required", description: "Please enter your phone number", variant: "destructive" });
+      return;
+    }
     setLoading(true);
+
+    const email = phoneToEmail(phone);
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -65,10 +75,8 @@ const Register = () => {
       return;
     }
 
-    // Update profile with phone if provided
-    if (extraData?.phone) {
-      await supabase.from("profiles").update({ phone: extraData.phone as string }).eq("id", userId);
-    }
+    // Update profile with phone
+    await supabase.from("profiles").update({ phone }).eq("id", userId);
 
     // Add role (trigger already adds 'patient', so for non-patient we add the new role)
     if (role !== "patient") {
@@ -95,7 +103,7 @@ const Register = () => {
 
     toast({
       title: "Account created!",
-      description: "Please check your email to verify your account, then log in.",
+      description: "You can now log in with your phone number and password.",
     });
 
     navigate("/login");
@@ -126,7 +134,7 @@ const Register = () => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  signUp(patientEmail, patientPassword, patientName, "patient", { phone: patientPhone });
+                  signUp(patientPhone, patientPassword, patientName, "patient");
                 }}
                 className="mt-4 space-y-4 rounded-xl border bg-card p-6 shadow-card"
               >
@@ -135,12 +143,11 @@ const Register = () => {
                   <Input placeholder="John Doe" value={patientName} onChange={(e) => setPatientName(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input type="email" placeholder="you@example.com" value={patientEmail} onChange={(e) => setPatientEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input type="tel" placeholder="+91 9876543210" value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)} />
+                  <Label>Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input type="tel" placeholder="+91 9876543210" value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)} required className="pl-10" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Password</Label>
@@ -157,7 +164,7 @@ const Register = () => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  signUp(doctorEmail, doctorPassword, doctorName, "doctor", {
+                  signUp(doctorPhone, doctorPassword, doctorName, "doctor", {
                     specialization: doctorSpecialty,
                     experience: doctorExperience,
                   });
@@ -169,8 +176,11 @@ const Register = () => {
                   <Input placeholder="Dr. Jane Smith" value={doctorName} onChange={(e) => setDoctorName(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input type="email" placeholder="doctor@example.com" value={doctorEmail} onChange={(e) => setDoctorEmail(e.target.value)} required />
+                  <Label>Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input type="tel" placeholder="+91 9876543210" value={doctorPhone} onChange={(e) => setDoctorPhone(e.target.value)} required className="pl-10" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Specialty</Label>
@@ -195,7 +205,7 @@ const Register = () => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  signUp(centerEmail, centerPassword, centerName, "center", {
+                  signUp(centerPhone, centerPassword, centerName, "center", {
                     centerName,
                     address: centerAddress,
                   });
@@ -207,8 +217,11 @@ const Register = () => {
                   <Input placeholder="Apollo Medical Center" value={centerName} onChange={(e) => setCenterName(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input type="email" placeholder="admin@center.com" value={centerEmail} onChange={(e) => setCenterEmail(e.target.value)} required />
+                  <Label>Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input type="tel" placeholder="+91 9876543210" value={centerPhone} onChange={(e) => setCenterPhone(e.target.value)} required className="pl-10" />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Address</Label>
