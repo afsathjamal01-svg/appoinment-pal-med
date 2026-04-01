@@ -13,6 +13,9 @@ import Login from "./pages/Login";
 import PatientLogin from "./pages/PatientLogin";
 import DoctorLogin from "./pages/DoctorLogin";
 import Register from "./pages/Register";
+import PatientRegister from "./pages/PatientRegister";
+import DoctorRegister from "./pages/DoctorRegister";
+import CenterRegister from "./pages/CenterRegister";
 import PatientDashboard from "./pages/PatientDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import CenterDashboard from "./pages/CenterDashboard";
@@ -38,6 +41,9 @@ const App = () => (
             <Route path="/login/patient" element={<PatientLogin />} />
             <Route path="/login/doctor" element={<DoctorLogin />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/register/patient" element={<PatientRegister />} />
+            <Route path="/register/doctor" element={<DoctorRegister />} />
+            <Route path="/register/center" element={<CenterRegister />} />
             <Route path="/patient/dashboard" element={<ProtectedRoute requiredRole="patient"><PatientDashboard /></ProtectedRoute>} />
             <Route path="/doctor/dashboard" element={<ProtectedRoute requiredRole="doctor"><DoctorDashboard /></ProtectedRoute>} />
             <Route path="/center/dashboard" element={<ProtectedRoute requiredRole="center"><CenterDashboard /></ProtectedRoute>} />
