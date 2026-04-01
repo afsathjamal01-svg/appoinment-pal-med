@@ -18,7 +18,7 @@ const loginOptions = [
   },
   {
     role: "Admin",
-    path: "/admin/login",
+    path: "/login/admin",
     icon: Shield,
     description: "Administration console for platform management",
     color: "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
