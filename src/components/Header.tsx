@@ -84,11 +84,11 @@ const Header = () => {
             </DropdownMenu>
           ) : (
             <>
-              <Link to="/login">
-                <Button variant="ghost" size="sm">Log In</Button>
-              </Link>
               <Link to="/register">
                 <Button size="sm">Sign Up</Button>
+              </Link>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">Log In</Button>
               </Link>
             </>
           )}
@@ -130,11 +130,11 @@ const Header = () => {
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="flex-1">
-                    <Button variant="outline" className="w-full" size="sm">Log In</Button>
-                  </Link>
                   <Link to="/register" className="flex-1">
                     <Button className="w-full" size="sm">Sign Up</Button>
+                  </Link>
+                  <Link to="/login" className="flex-1">
+                    <Button variant="outline" className="w-full" size="sm">Log In</Button>
                   </Link>
                 </>
               )}
