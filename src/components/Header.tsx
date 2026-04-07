@@ -22,6 +22,21 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, roles, signOut } = useAuth();
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleLogoTap = useCallback(() => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      navigate("/login/admin");
+      return;
+    }
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 1500);
+  }, [navigate]);
 
   const getDashboardPath = () => {
     if (roles.includes("admin")) return "/admin/dashboard";
