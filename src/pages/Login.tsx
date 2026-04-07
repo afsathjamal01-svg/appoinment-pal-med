@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Stethoscope, User, HeartPulse, Shield } from "lucide-react";
+import { Stethoscope, User } from "lucide-react";
 
 const loginOptions = [
   {
@@ -8,20 +8,6 @@ const loginOptions = [
     icon: User,
     description: "Book appointments and manage your health records",
     color: "bg-primary hover:bg-primary/90 text-primary-foreground",
-  },
-  {
-    role: "Doctor",
-    path: "/login/doctor",
-    icon: HeartPulse,
-    description: "Manage your practice, patients, and appointments",
-    color: "bg-emerald-600 hover:bg-emerald-700 text-white",
-  },
-  {
-    role: "Admin",
-    path: "/login/admin",
-    icon: Shield,
-    description: "Administration console for platform management",
-    color: "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
   },
 ];
 
