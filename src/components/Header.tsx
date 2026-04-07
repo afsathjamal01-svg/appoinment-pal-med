@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Stethoscope, LogOut, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -22,6 +22,22 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, roles, signOut } = useAuth();
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleLogoTap = useCallback((e: React.MouseEvent) => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    if (tapCountRef.current >= 5) {
+      e.preventDefault();
+      tapCountRef.current = 0;
+      navigate("/login/admin");
+      return;
+    }
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 1500);
+  }, [navigate]);
 
   const getDashboardPath = () => {
     if (roles.includes("admin")) return "/admin/dashboard";
@@ -38,7 +54,7 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" onClick={handleLogoTap}>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <Stethoscope className="h-5 w-5 text-primary-foreground" />
           </div>
