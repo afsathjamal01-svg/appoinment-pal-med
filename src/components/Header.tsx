@@ -25,10 +25,11 @@ const Header = () => {
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const handleLogoTap = useCallback(() => {
+  const handleLogoTap = useCallback((e: React.MouseEvent) => {
     tapCountRef.current += 1;
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
     if (tapCountRef.current >= 5) {
+      e.preventDefault();
       tapCountRef.current = 0;
       navigate("/login/admin");
       return;
