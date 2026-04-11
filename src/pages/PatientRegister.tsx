@@ -3,35 +3,48 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, Loader2, Phone, Stethoscope } from "lucide-react";
+import { User, Loader2, Phone, Stethoscope, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const phoneToEmail = (phone: string) => `phone_${phone.replace(/\D/g, "")}@medibook.local`;
 
 const PatientRegister = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone.trim()) { toast({ title: "Phone required", variant: "destructive" }); return; }
+    if (!email.trim()) { toast({ title: "Email required", variant: "destructive" }); return; }
     setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
-      email: phoneToEmail(phone), password,
-      options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
+      email,
+      password,
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: window.location.origin,
+      },
     });
-    if (error) { toast({ title: "Registration failed", description: error.message, variant: "destructive" }); setLoading(false); return; }
+
+    if (error) {
+      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
 
     const userId = data.user?.id;
-    if (userId) await supabase.from("profiles").update({ phone }).eq("id", userId);
+    if (userId && phone.trim()) {
+      await supabase.from("profiles").update({ phone }).eq("id", userId);
+    }
 
-    toast({ title: "Account created!", description: "You can now log in." });
+    toast({
+      title: "Verification email sent!",
+      description: "Please check your inbox and verify your email before logging in.",
+    });
     navigate("/login/patient");
     setLoading(false);
   };
@@ -63,10 +76,17 @@ const PatientRegister = () => {
               <Input placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label>Phone Number</Label>
+              <Label>Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11 pl-10" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Phone Number <span className="text-muted-foreground text-xs">(optional)</span></Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="tel" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-11 pl-10" />
+                <Input type="tel" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 pl-10" />
               </div>
             </div>
             <div className="space-y-2">
