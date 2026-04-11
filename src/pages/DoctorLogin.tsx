@@ -3,37 +3,31 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HeartPulse, Loader2, Phone, Stethoscope } from "lucide-react";
+import { HeartPulse, Loader2, Mail, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const phoneToEmail = (phone: string) => {
-  const digits = phone.replace(/\D/g, "");
-  return `phone_${digits}@medibook.local`;
-};
 
 const DoctorLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone.trim()) {
-      toast({ title: "Phone required", description: "Please enter your phone number", variant: "destructive" });
+    if (!email.trim()) {
+      toast({ title: "Email required", description: "Please enter your email address", variant: "destructive" });
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: phoneToEmail(phone), password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
       setLoading(false);
       return;
     }
 
-    // Verify doctor role
     const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
     const userRoles = rolesData?.map((r) => r.role) ?? [];
     if (!userRoles.includes("doctor")) {
@@ -73,14 +67,14 @@ const DoctorLogin = () => {
           </div>
 
           <h1 className="text-2xl font-bold text-foreground">Doctor Login</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in with your phone number</p>
+          <p className="mt-1 text-sm text-muted-foreground">Sign in with your email</p>
 
           <form onSubmit={handleLogin} className="mt-6 space-y-5 rounded-xl border bg-card p-6 shadow-sm">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="phone" type="tel" placeholder="+91 9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} required className="h-11 pl-10" />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input id="email" type="email" placeholder="doctor@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11 pl-10" />
               </div>
             </div>
             <div className="space-y-2">
